@@ -1,4 +1,4 @@
-import './index.css';
+import './index.css';()
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
@@ -179,9 +179,62 @@ export default function SmartFitnessPlanner() {
   const [openFaq, setOpenFaq] = useState(0);
   const [visibleMap, setVisibleMap] = useState({});
   const [statsActive, setStatsActive] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userGoal, setUserGoal] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const sectionRefs = useRef([]);
   const statsRef = useRef(null);
+  // --- НАЧАЛО БЛОКА AI ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userGoal, setUserGoal] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStartTrial = async () => {
+    if (!userGoal) return alert("Напишите вашу цель!");
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:5678/webhook-test/aisera", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
+      });
+      const data = await response.json();
+      setAiResponse(data.output || "Ваш план на 7 дней готов!");
+    } catch (error) {
+      console.error(error);
+      setAiResponse("Ошибка связи с n8n");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // --- КОНЕЦ БЛОКА AI ---
+
+  // Твой старый код (не трогай его, пусть идет следом)
+      // тут твои цены...
   const priceData = useMemo(() => {
+   const handleAISearch = async () => {
+    try {
+      console.log("Отправка запроса в n8n...");
+      const response = await fetch("http://localhost:5678/webhook-test/aisera", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: "Составь план тренировок для новичка",
+        }),
+      });
+
+      if (!response.ok) throw new Error('Ошибка сети');
+
+      const data = await response.json();
+      console.log("Ответ от n8n:", data);
+      alert("Связь установлена! n8n получил данные.");
+    } catch (error) {
+      console.error("Детали ошибки:", error);
+      alert("Не удалось связаться с n8n. Убедись, что нажал 'Listen for Test Event'");
+    }
+  };
     const monthly = [
       { name: "Базовый", price: 19, badge: "", features: ["AI-план тренировок", "Трекер прогресса", "База упражнений"] },
       {
