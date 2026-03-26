@@ -185,15 +185,11 @@ export default function SmartFitnessPlanner() {
   const [isLoading, setIsLoading] = useState(false);
   const sectionRefs = useRef([]);
   const statsRef = useRef(null);
-  // --- НАЧАЛО БЛОКА AI ---
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userGoal, setUserGoal] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
+ // --- Строка 188 ---
   const handleStartTrial = async () => {
     if (!userGoal) return alert("Напишите вашу цель!");
     setIsLoading(true);
+    setAiResponse(""); 
     try {
       const response = await fetch("http://localhost:5678/webhook-test/aisera", {
         method: "POST",
@@ -201,18 +197,15 @@ export default function SmartFitnessPlanner() {
         body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
       });
       const data = await response.json();
-      setAiResponse(data.output || "Ваш план на 7 дней готов!");
+      setAiResponse(data.output || "План готов! Начнем?");
     } catch (error) {
       console.error(error);
-      setAiResponse("Ошибка связи с n8n");
+      setAiResponse("Ошибка связи с n8n.");
     } finally {
       setIsLoading(false);
     }
   };
-  // --- КОНЕЦ БЛОКА AI ---
-
-  // Твой старый код (не трогай его, пусть идет следом)
-      // тут твои цены...
+  // --- Конец функции ---
   const priceData = useMemo(() => {
    const handleAISearch = async () => {
     try {
