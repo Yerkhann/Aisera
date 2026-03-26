@@ -182,3 +182,28 @@
     border-right-color: var(--border);
   }
 }
+/* Стили для области прокрутки */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #f97316; /* Оранжевый цвет под твой дизайн */
+  border-radius: 10px;
+}
+
+/* Дополнительно: чтобы списки не слипались */
+.markdown-content ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem;
+}

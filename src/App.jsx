@@ -1,4 +1,5 @@
 import './index.css';
+import ReactMarkdown from 'react-markdown';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
@@ -18,6 +19,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+
 
 const Github = Activity;
 const Twitter = Activity;
@@ -191,44 +193,58 @@ export default function SmartFitnessPlanner() {
   const statsRef = useRef(null);
 
 const handleStartTrial = async () => {
-    if (!userGoal) return alert("Напишите вашу цель!");
-    setIsLoading(true);
-    setAiResponse(""); 
+  if (!userGoal) return alert("Напишите вашу цель!");
+  
+  setIsLoading(true);
+  setAiResponse(""); 
+
+  try {
+    // 1. Отправляем запрос (проверь, что в n8n стоит POST и путь aisera2)
+    const response = await fetch("https://clean-pants-appear.loca.lt/webhook/aisera2", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
+    });
+
+    // 2. Читаем ответ сначала как обычный ТЕКСТ
+    // Это ключевой момент: если n8n пришлет пустоту, JSON.parse не сломает сайт
+    const responseText = await response.text();
     
-    try {
-      // 1. Пытаемся отправить запрос
-      const response = await fetch("http://localhost:5678/webhook/aisera", {
-        method: "POST",
-        mode: 'cors', // Добавляем CORS, чтобы браузер не блокировал запрос
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Сервер ответил ошибкой: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Данные от n8n:", data);
-
-      // 2. Ищем текст (проверяем все возможные поля от разных моделей)
-      // data[0]?.text нужен, если n8n присылает массив (как на скрине image_2f9ede)
-      const programText = data.text || data.output || data.message || (Array.isArray(data) ? data[0]?.text : null);
-
-      if (programText) {
-        setAiResponse(programText);
-      } else {
-        // Если n8n ответил, но текста нет, выведем то, что пришло, для теста
-        setAiResponse("Данные получены, но текст не найден: " + JSON.stringify(data));
-      }
-    } catch (error) {
-      console.error("Ошибка запроса:", error);
-      // Если сайт на Vercel, напоминаем запустить n8n локально
-      setAiResponse("Не удалось связаться с ИИ. Убедитесь, что n8n запущен на вашем ПК и включен туннель (--tunnel) или режим Active.");
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      throw new Error(`Сервер ответил ошибкой: ${response.status}`);
     }
-  };
+
+    if (!responseText || responseText.trim() === "") {
+      throw new Error("n8n прислал пустой ответ. Проверь настройки Webhook (Response Mode)!");
+    }
+
+    // 3. Пытаемся превратить текст в объект
+    const data = JSON.parse(responseText);
+    console.log("Данные от n8n:", data);
+
+    // 4. Ищем текст плана тренировок (проверяем все возможные ключи)
+    let programText = "";
+    if (Array.isArray(data)) {
+      const item = data[0];
+      programText = item?.output || item?.text || item?.response || JSON.stringify(item);
+    } else {
+      programText = data.output || data.text || data.response || JSON.stringify(data);
+    }
+
+    if (programText && programText !== "{}") {
+      setAiResponse(programText);
+    } else {
+      setAiResponse("ИИ ответил, но не прислал текст. Проверь узел Groq в n8n!");
+    }
+
+  } catch (error) {
+    console.error("Ошибка запроса:", error);
+    // Выводим понятную ошибку пользователю вместо SyntaxError
+    setAiResponse(`Ошибка: ${error.message}. Убедись, что n8n запущен и нажат Publish.`);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const priceData = useMemo(() => {
     const monthly = [
@@ -409,10 +425,14 @@ const handleStartTrial = async () => {
 
             {aiResponse && (
               <div className="mt-6 p-4 rounded-xl bg-white/5 border border-orange-500/30 animate-fade-in">
-                <p className="text-orange-300 font-semibold mb-1 text-sm flex items-center gap-2">
+                <p className="text-orange-300 font-semibold mb-2 text-sm flex items-center gap-2">
                   <Brain className="h-4 w-4" /> Ответ системы:
                 </p>
-                <p className="text-white/80 text-sm italic">"{aiResponse}"</p>
+                <div className="text-white/90 text-sm max-h-[350px] overflow-y-auto pr-3 custom-scrollbar text-left leading-relaxed">
+                  <div className="markdown-content text-left"> 
+                    <ReactMarkdown>{aiResponse}</ReactMarkdown>
+                </div>
+                </div>
               </div>
             )}
           </div>
