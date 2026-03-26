@@ -195,7 +195,7 @@ const handleStartTrial = async () => {
     setIsLoading(true);
     setAiResponse(""); 
     try {
-      // Убедись, что ссылка верная (localhost или production)
+      // ОБЯЗАТЕЛЬНО проверь, что ссылка ведет на твой рабочий вебхук
       const response = await fetch("http://localhost:5678/webhook/aisera", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -204,18 +204,18 @@ const handleStartTrial = async () => {
       
       const data = await response.json();
 
-      // Ищем текст программы в любом из полей, которые присылает n8n
-      const realProgram = data.text || data.output || data.message;
+      // Исправляем: проверяем все поля, где может быть текст
+      const programText = data.text || data.output || data.message;
 
-      if (realProgram) {
-        setAiResponse(realProgram);
+      if (programText) {
+        setAiResponse(programText);
       } else {
-        // Если n8n прислал пустой ответ, выведем его целиком для проверки
-        setAiResponse("Программа получена, но формат странный: " + JSON.stringify(data));
+        // Если текст не найден, выведем ошибку, а не заглушку
+        setAiResponse("Ошибка: n8n прислал пустой ответ. Проверь узел Respond.");
       }
     } catch (error) {
       console.error(error);
-      setAiResponse("Ошибка: n8n не отвечает. Запусти его в терминале!");
+      setAiResponse("Ошибка связи. Запущен ли n8n?");
     } finally {
       setIsLoading(false);
     }
