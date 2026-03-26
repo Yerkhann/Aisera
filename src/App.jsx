@@ -200,7 +200,7 @@ const handleStartTrial = async () => {
 
   try {
     // 1. Отправляем запрос (проверь, что в n8n стоит POST и путь aisera2)
-    const response = await fetch("https://dedbdd92f5fa48.lhr.life/webhook/aisera2", {
+    const response = await fetch("https://abcc50dd07c8e5.lhr.life/webhook/aisera2", {
   method: "POST",
   mode: 'no-cors', // Это уберет ошибку CORS в браузере
   headers: { 
