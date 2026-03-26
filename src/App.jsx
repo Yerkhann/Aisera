@@ -194,28 +194,37 @@ const handleStartTrial = async () => {
     if (!userGoal) return alert("Напишите вашу цель!");
     setIsLoading(true);
     setAiResponse(""); 
+    
     try {
-      // ОБЯЗАТЕЛЬНО проверь, что ссылка ведет на твой рабочий вебхук
+      // 1. Пытаемся отправить запрос
       const response = await fetch("http://localhost:5678/webhook/aisera", {
         method: "POST",
+        mode: 'cors', // Добавляем CORS, чтобы браузер не блокировал запрос
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
       });
       
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Сервер ответил ошибкой: ${response.status}`);
+      }
 
-      // Исправляем: проверяем все поля, где может быть текст
-      const programText = data.text || data.output || data.message;
+      const data = await response.json();
+      console.log("Данные от n8n:", data);
+
+      // 2. Ищем текст (проверяем все возможные поля от разных моделей)
+      // data[0]?.text нужен, если n8n присылает массив (как на скрине image_2f9ede)
+      const programText = data.text || data.output || data.message || (Array.isArray(data) ? data[0]?.text : null);
 
       if (programText) {
         setAiResponse(programText);
       } else {
-        // Если текст не найден, выведем ошибку, а не заглушку
-        setAiResponse("Ошибка: n8n прислал пустой ответ. Проверь узел Respond.");
+        // Если n8n ответил, но текста нет, выведем то, что пришло, для теста
+        setAiResponse("Данные получены, но текст не найден: " + JSON.stringify(data));
       }
     } catch (error) {
-      console.error(error);
-      setAiResponse("Ошибка связи. Запущен ли n8n?");
+      console.error("Ошибка запроса:", error);
+      // Если сайт на Vercel, напоминаем запустить n8n локально
+      setAiResponse("Не удалось связаться с ИИ. Убедитесь, что n8n запущен на вашем ПК и включен туннель (--tunnel) или режим Active.");
     } finally {
       setIsLoading(false);
     }
