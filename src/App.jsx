@@ -200,7 +200,7 @@ const handleStartTrial = async () => {
 
   try {
     // 1. Отправляем запрос (проверь, что в n8n стоит POST и путь aisera2)
-    const response = await fetch("https://clean-pants-appear.loca.lt/webhook/aisera2", {
+    const response = await fetch("https://dedbdd92f5fa48.lhr.life/webhook/aisera2", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
