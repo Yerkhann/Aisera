@@ -190,21 +190,32 @@ export default function SmartFitnessPlanner() {
   const sectionRefs = useRef([]);
   const statsRef = useRef(null);
 
-  const handleStartTrial = async () => {
+const handleStartTrial = async () => {
     if (!userGoal) return alert("Напишите вашу цель!");
     setIsLoading(true);
     setAiResponse(""); 
     try {
-      const response = await fetch("http://localhost:5678/webhook-test/aisera", {
+      // Используем Production URL (без -test), если ты активировал воркфлоу в n8n
+      const response = await fetch("http://localhost:5678/webhook/aisera", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ goal: userGoal, trial_days: 7 }),
       });
+      
       const data = await response.json();
-      setAiResponse(data.output || "План готов! Начнем?");
+      console.log("Ответ от n8n:", data); // Для отладки в консоли
+
+      // Проверяем все возможные поля, которые может вернуть n8n
+      const finalResponse = data.text || data.output || data.message || (typeof data === 'string' ? data : null);
+
+      if (finalResponse) {
+        setAiResponse(finalResponse);
+      } else {
+        setAiResponse("План сформирован, но формат ответа не распознан. Проверьте n8n.");
+      }
     } catch (error) {
       console.error(error);
-      setAiResponse("Ошибка связи с n8n.");
+      setAiResponse("Ошибка связи с n8n. Убедитесь, что сервер n8n запущен.");
     } finally {
       setIsLoading(false);
     }
@@ -676,6 +687,34 @@ export default function SmartFitnessPlanner() {
         <p className="text-sm text-white/50">
           © {new Date().getFullYear()} SmartFitness AI. Все права защищены.
         </p>
+        <section className="mt-24 py-12 border-t border-white/10 bg-black/20 rounded-3xl px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-rose-500 bg-clip-text text-transparent">
+      Разработчики проекта AISERA
+    </h2>
+    <p className="text-gray-400 mt-2">Наша команда специалистов по AI и Web</p>
+  </div>
+  
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+    {[
+      { name: "Диас", role: "Frontend Lead", desc: "Разработка интерфейса на React" },
+      { name: "Айбек", role: "Backend / n8n", desc: "Логика вебхуков и серверов" },
+      { name: "Адильбек", role: "AI Integration", desc: "Настройка LLM и промптов" },
+      { name: "Ислам", role: "UX/UI Design", desc: "Визуальный стиль и анимации" },
+      { name: "Саят", role: "Quality Assurance", desc: "Тестирование и отладка" },
+      { name: "Айтуар", role: "Data Science", desc: "Анализ данных и метрик" }
+    ].map((member) => (
+      <div key={member.name} className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-orange-500/50 transition-all duration-300">
+        <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+          <span className="text-orange-500 font-bold">{member.name[0]}</span>
+        </div>
+        <h4 className="text-xl font-bold text-white mb-1">{member.name}</h4>
+        <p className="text-orange-400 text-sm font-medium mb-2">{member.role}</p>
+        <p className="text-gray-500 text-xs leading-relaxed">{member.desc}</p>
+      </div>
+    ))}
+  </div>
+</section>
       </footer>
     </div>
   );
